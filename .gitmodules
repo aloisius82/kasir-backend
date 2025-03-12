@@ -1,0 +1,3 @@
+[submodule "kasir-backend"]
+	path = kasir-backend
+	url = git@github.com:aloisius82/kasir-backend
