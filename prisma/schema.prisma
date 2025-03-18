@@ -1,0 +1,209 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      String // Contoh: admin, kasir, gudang
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  penjualan  Penjualan[]
+  penerimaan Penerimaan[]
+  order      Order[]
+}
+
+model Kategori {
+  id        Int      @id @default(autoincrement())
+  nama      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  barang Barang[]
+}
+
+model Barang {
+  id                Int      @id @default(autoincrement())
+  nama              String
+  deskripsi         String?
+  hargaJual         Decimal
+  hargaBeli         Decimal
+  hargaBeliTerakhir Decimal
+  hpp               Decimal
+  barcode           String?  @unique
+  kategoriId        Int
+  saleLokasiId      Int?
+  kategori          Kategori @relation(fields: [kategoriId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  detailPenjualan  DetailPenjualan[]
+  detailPenerimaan DetailPenerimaan[]
+  detailOrder      DetailOrder[]
+  stok             Stok[]
+  saleLokasi       Lokasi?            @relation(fields: [saleLokasiId], references: [id])
+}
+
+model Penjualan {
+  id        Int      @id @default(autoincrement())
+  tanggal   DateTime @default(now())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  total     Decimal
+  session   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  detailPenjualan DetailPenjualan[]
+}
+
+model DetailPenjualan {
+  id          Int       @id @default(autoincrement())
+  penjualanId Int
+  penjualan   Penjualan @relation(fields: [penjualanId], references: [id])
+  barangId    Int
+  barang      Barang    @relation(fields: [barangId], references: [id])
+  jumlah      Int
+  hargaSatuan Decimal
+  hpp         Decimal
+  subtotal    Decimal
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Supplier {
+  id        Int      @id @default(autoincrement())
+  nama      String
+  alamat    String?
+  telepon   String?
+  pic       String?
+  picPhone  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order[]
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  tanggal     DateTime    @default(now())
+  noReferensi String
+  supplierId  Int
+  supplier    Supplier    @relation(fields: [supplierId], references: [id])
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  total       Decimal
+  remark      String?
+  status      StatusOrder
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  detailOrder DetailOrder[]
+  Penerimaan  Penerimaan[]
+}
+
+model DetailOrder {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  barangId  Int
+  barang    Barang   @relation(fields: [barangId], references: [id])
+  jumlah    Int
+  hargaBeli Decimal
+  subtotal  Decimal
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Penerimaan {
+  id          Int              @id @default(autoincrement())
+  tanggal     DateTime         @default(now())
+  userId      Int
+  user        User             @relation(fields: [userId], references: [id])
+  total       Decimal
+  noReferensi String?
+  orderId     Int?
+  pengirim    String?
+  remark      String?
+  status      StatusPenerimaan
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  detailPenerimaan DetailPenerimaan[]
+  order            Order?             @relation(fields: [orderId], references: [id])
+}
+
+model DetailPenerimaan {
+  id           Int        @id @default(autoincrement())
+  penerimaanId Int
+  penerimaan   Penerimaan @relation(fields: [penerimaanId], references: [id])
+  barangId     Int
+  barang       Barang     @relation(fields: [barangId], references: [id])
+  jumlah       Int
+  hargaBeli    Decimal
+  subtotal     Decimal
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Lokasi {
+  id        Int      @id @default(autoincrement())
+  nama      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stok   Stok[]
+  Barang Barang[]
+}
+
+model Stok {
+  id        Int      @id @default(autoincrement())
+  barangId  Int
+  barang    Barang   @relation(fields: [barangId], references: [id])
+  lokasiId  Int
+  lokasi    Lokasi   @relation(fields: [lokasiId], references: [id])
+  jumlah    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([barangId, lokasiId])
+}
+
+model image {
+  id   Int    @id @default(autoincrement())
+  hash String @unique
+  name String
+  data Bytes
+}
+
+enum StatusOrder {
+  open
+  proses
+  terima
+  jatuh_tempo
+  close
+  cancel
+}
+
+enum StatusPenerimaan {
+  open
+  terima
+  close
+  terbayar
+  cancel
+  jatuh_tempo
+  paid
+}
