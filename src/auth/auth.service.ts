@@ -22,7 +22,7 @@ export class AuthService {
     async authUser(
         username: string,
         password: string
-    ): Promise<{ access_token: string } | null> {
+    ): Promise<{ access_token: string; username: string } | null> {
         const user = await this.findOne(username)
         if (user == null)
             throw new HttpException('User not found', HttpStatus.NOT_FOUND)
@@ -36,7 +36,8 @@ export class AuthService {
         const payload = { sub: user.id, role: user.role }
         const access_token = await this.jwtService.signAsync(payload)
         return {
-            access_token
+            access_token,
+            username
         }
     }
 
