@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="preload" as="font" type="font/woff" href="/static/assets/ProductSans-Regular.8e995f2c.woff" crossorigin>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="renderer" content="webkit" />
+    <title>Apotek Pilang</title>
+    <script type="module" crossorigin src="/static/assets/index.6ed105df.js"></script>
+    <link rel="stylesheet" href="/static/assets/index.7a933010.css">
+  </head>
+  <style>
+    .bg-dark {
+      background: #151d32 !important;
+    }
+    .bg-light {
+      background: #f0f2f5 !important;
+    }
+  </style>
+  <body>
+    <div id="app"></div>
+    
+  </body>
+</html>
+
+<script>
+  const themeStore = localStorage.getItem('global-application')
+  const htmlElement = document.documentElement
+
+  if (themeStore) {
+    const theme = JSON.parse(themeStore).currentTheme
+    htmlElement.classList.add(theme === 'light' ? 'bg-light' : 'bg-dark')
+  }
+
+  // Fallback
+  htmlElement.classList.add('bg-dark')
+</script>

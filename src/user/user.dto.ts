@@ -1,4 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty } from 'class-validator';
+import { Role } from './roles.enum';
 
 export class LoginDto {
     @ApiProperty()
@@ -32,4 +34,30 @@ export class UserCreateParm {
 export type UserProfile = {
     username: string
     role?: string
+}
+
+export class ResetPasswordDto {
+    @ApiProperty()
+    userId: number
+}
+
+export class ResponseDto {
+    @ApiProperty()
+    status: string
+
+    @ApiProperty()
+    message?: string
+
+    @ApiProperty()
+    data?: any
+
+    @ApiProperty()
+    error?: any
+}
+
+export class ChangeRoleDto {
+  @ApiProperty({ enum: Role })
+  @IsEnum(Role)
+  @IsNotEmpty()
+  role: Role;
 }

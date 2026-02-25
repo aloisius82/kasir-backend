@@ -1,6 +1,13 @@
+
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator'
+import {
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsString
+} from 'class-validator'
 import { Decimal } from '@prisma/client/runtime/library'
+import { Type } from 'class-transformer'
 
 export class CreateBarangDto {
     @ApiProperty({ example: 'Indomie Goreng' })
@@ -65,3 +72,27 @@ export class UpdateBarangDto {
     @IsNumber()
     kategoriId?: number
 }
+
+export class SearchQueryDto {
+    @ApiProperty({
+        example: 'indomie',
+        required: false,
+        default: ''
+    })
+    @IsOptional()
+    @IsString()
+    key?: string
+
+    @ApiProperty({ example: 1, required: false, default: 1 })
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    page?: number
+
+    @ApiProperty({ example: 10, required: false, default: 10 })
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    num?: number
+}
+

@@ -25,6 +25,21 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Environment Configuration
+
+The application uses `.env` files for environment configuration.
+
+-   `.env`: Used for the development environment.
+-   `.env.production`: Used for the production environment.
+
+Make sure to create a `.env.production` file for the production environment and fill in the correct values for the following variables:
+
+-   `DATABASE_URL`: The connection string for your production database.
+-   `PORT`: The port the application should listen on in production.
+-   `JWT_SECRET`: A long, random string to be used as the secret for signing JSON Web Tokens.
+
+**Important:** Do not commit the `.env.production` file to version control. It should be managed securely.
+
 ## Project setup
 
 ```bash
@@ -41,6 +56,7 @@ $ npm run start
 $ npm run start:dev
 
 # production mode
+$ npm run build
 $ npm run start:prod
 ```
 

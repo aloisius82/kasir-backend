@@ -22,7 +22,11 @@ export class AuthService {
     async authUser(
         username: string,
         password: string
-    ): Promise<{ access_token: string; username: string } | null> {
+    ): Promise<{
+        access_token: string
+        username: string
+        role: string
+    } | null> {
         const user = await this.findOne(username)
         if (user == null)
             throw new HttpException('User not found', HttpStatus.NOT_FOUND)
@@ -37,7 +41,8 @@ export class AuthService {
         const access_token = await this.jwtService.signAsync(payload)
         return {
             access_token,
-            username
+            username,
+            role: user.role
         }
     }
 
@@ -57,8 +62,9 @@ export class AuthService {
         const user = await this.prisma.user.findUnique({
             where: { id: userId }
         })
+        // console.log(user)
         if (!user) throw new HttpException('not found', HttpStatus.NOT_FOUND)
-        if (!bcrypt.compare(oldPassword, user.password))
+        if (!(await bcrypt.compare(oldPassword, user.password)))
             throw new HttpException(
                 'password not match',
                 HttpStatus.UNAUTHORIZED

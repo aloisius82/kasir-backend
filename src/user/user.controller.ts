@@ -6,12 +6,23 @@ import {
     Request,
     UseGuards,
     HttpException,
-    HttpStatus
+    HttpStatus,
+    Patch,
+    Param
 } from '@nestjs/common'
 import { ApiTags, ApiProperty, ApiBearerAuth } from '@nestjs/swagger'
 import { UserService } from './user.service'
-import { LoginDto, ChangePasswordDto, UserCreateParm } from './user.dto'
+import {
+    LoginDto,
+    ChangePasswordDto,
+    UserCreateParm,
+    ResetPasswordDto,
+    ChangeRoleDto
+} from './user.dto'
 import { AuthGuard } from '../auth/auth.guard'
+import { RolesGuard } from '../auth/roles.guard'
+import { Roles } from '../auth/roles.decorator'
+import { Role } from './roles.enum'
 
 @ApiTags('User')
 @Controller('user')
@@ -44,16 +55,30 @@ export class UserController {
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     async changePassword(@Body() parm: ChangePasswordDto, @Request() req) {
+        // console.log(parm, req.user)
         if (parm.newPassword != parm.confrimNewPassword)
             throw new HttpException(
                 'not match new password',
-                HttpStatus.UNAUTHORIZED
+                HttpStatus.NOT_ACCEPTABLE
             )
+        // console.log('log 1')
         return this.userService.changePassword(
             req.user.sub,
             parm.oldPassword,
-            parm.newPassword
+            parm.newPassword,
+            req.user
         )
+    }
+
+    @Patch(':id/role')
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.admin)
+    @ApiBearerAuth()
+    async changeRole(
+        @Param('id') id: number,
+        @Body() changeRoleDto: ChangeRoleDto
+    ) {
+        return this.userService.changeRole(+id, changeRoleDto.role)
     }
 
     @Get('/renew-token')
@@ -61,5 +86,20 @@ export class UserController {
     @ApiBearerAuth()
     async renewToken(@Request() req): Promise<any> {
         return this.userService.renewToken(req.user.sub)
+    }
+
+    @Get('/user/list')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    async userList(@Request() req): Promise<any> {
+        return this.userService.userList(req.user, {})
+    }
+
+    @Post('/user/reset-password')
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.admin)
+    @ApiBearerAuth()
+    async resetPassword(@Body() parm: ResetPasswordDto, @Request() req) {
+        return this.userService.resetPassword(parm.userId, req.user)
     }
 }
