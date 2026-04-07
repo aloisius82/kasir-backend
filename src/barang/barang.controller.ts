@@ -26,7 +26,12 @@ import { AuthGuard, AuthAdminGuard } from '../auth/auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../auth/roles.decorator'
 import { Role } from '../user/roles.enum'
-import { CreateBarangDto, UpdateBarangDto, SearchQueryDto } from './barang.dto'
+import {
+    CreateBarangDto,
+    UpdateBarangDto,
+    SearchQueryDto,
+    StockOpnameDto
+} from './barang.dto'
 
 @Controller('barang')
 @ApiTags('barang')
@@ -34,7 +39,9 @@ export class BarangController {
     constructor(private readonly barangService: BarangService) {}
 
     @Post()
-    @UseGuards(AuthAdminGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles([Role.admin, Role.kasir])
+    @ApiBearerAuth()
     create(@Body() data: CreateBarangDto, @Request() req) {
         return this.barangService.create(data)
     }
@@ -113,6 +120,25 @@ export class BarangController {
         return this.barangService.findOne(id)
     }
 
+    @Post('stock-opname')
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles([Role.admin, Role.kasir])
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Melakukan stock opname untuk barang' })
+    async stockOpname(@Body() data: StockOpnameDto, @Request() req) {
+        if (!req.user || !req.user.id) {
+            throw new HttpException(
+                'User not found in request',
+                HttpStatus.UNAUTHORIZED
+            )
+        }
+        try {
+            return await this.barangService.stockOpname(req.user.id, data)
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
+        }
+    }
+
     @Put(':id')
     @UseGuards(AuthGuard, RolesGuard)
     @Roles([Role.admin, Role.kasir])
@@ -127,7 +153,10 @@ export class BarangController {
     }
 
     @Delete(':id')
-    @UseGuards(AuthAdminGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles([Role.admin, Role.kasir])
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Menghapus barang berdasarkan ID' })
     remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
         return this.barangService.remove(id)
     }

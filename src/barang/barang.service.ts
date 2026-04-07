@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
-import { CreateBarangDto, SearchQueryDto } from './barang.dto'
-import { contains } from 'class-validator'
+import { CreateBarangDto, SearchQueryDto, StockOpnameDto } from './barang.dto'
 
 @Injectable()
 export class BarangService {
@@ -13,10 +12,15 @@ export class BarangService {
                 hargaBeliTerakhir: data.hargaBeli,
                 hpp: data.hargaBeli,
                 saleLokasiId: 1, // Default location
-                kategoriId: 1 // Default kategori
+                kategoriId: 1, // Default kategori
+                barcode: null
             },
             data
         )
+        dataBarang.barcode = dataBarang.barcode?.trim()
+        if (dataBarang.barcode === '' || dataBarang.barcode?.length === 0) {
+            dataBarang.barcode = null
+        }
         return this.prisma.barang.create({
             data: dataBarang,
             include: { kategori: true }
@@ -24,24 +28,27 @@ export class BarangService {
     }
 
     async findAll({ q }: { q?: string }) {
-        const where = q
-            ? {
-                  OR: [
-                      {
-                          nama: {
-                              contains: q
-                              // mode: 'insensitive'
+        const where = {
+            inactive: false,
+            ...(q
+                ? {
+                      OR: [
+                          {
+                              nama: {
+                                  contains: q
+                                  // mode: 'insensitive'
+                              }
+                          },
+                          {
+                              barcode: {
+                                  contains: q
+                                  // mode: 'insensitive'
+                              }
                           }
-                      },
-                      {
-                          barcode: {
-                              contains: q
-                              // mode: 'insensitive'
-                          }
-                      }
-                  ]
-              }
-            : undefined
+                      ]
+                  }
+                : {})
+        }
         return this.prisma.barang.findMany({
             where,
             select: { id: true, nama: true, barcode: true, hargaJual: true }
@@ -56,6 +63,7 @@ export class BarangService {
         const searchKey = key || ''
 
         const whereClause = {
+            inactive: false,
             OR: [
                 {
                     nama: {
@@ -81,8 +89,25 @@ export class BarangService {
             this.prisma.barang.count({ where: whereClause })
         ])
 
+        const dataWithSaleQty = await Promise.all(
+            data.map(async (item) => {
+                const saleQty = await this.prisma.detailPenjualan.aggregate({
+                    _sum: {
+                        jumlah: true
+                    },
+                    where: {
+                        barangId: item.id
+                    }
+                })
+                return {
+                    ...item,
+                    saleQty: saleQty._sum.jumlah || 0
+                }
+            })
+        )
+
         return {
-            data,
+            data: dataWithSaleQty,
             total,
             page: pageNumber,
             num: itemsPerPage,
@@ -91,7 +116,35 @@ export class BarangService {
     }
 
     async findOne(id: number) {
-        return this.prisma.barang.findUnique({ where: { id } })
+        return this.prisma.barang.findFirst({ where: { id, inactive: false } })
+    }
+
+    async stockOpname(userId: number, data: StockOpnameDto) {
+        // const barang = await this.prisma.barang.findUnique({
+        //     where: { id }
+        // })
+        // if (!barang) {
+        //     throw new NotFoundException('Barang tidak ditemukan')
+        // }
+        // const stokAwal = barang.stok
+        // const { stokFisik, keterangan } = data
+        // const selisih = stokFisik - stokAwal
+        // return this.prisma.$transaction(async (prisma) => {
+        //     await prisma.stockOpname.create({
+        //         data: {
+        //             barangId: id,
+        //             stokAwal,
+        //             stokAkhir: stokFisik,
+        //             selisih,
+        //             keterangan,
+        //             userId
+        //         }
+        //     })
+        //     return prisma.barang.update({
+        //         where: { id },
+        //         data: { stok: stokFisik }
+        //     })
+        // })
     }
 
     async update(id: number, data: any) {
@@ -104,6 +157,10 @@ export class BarangService {
     }
 
     async remove(id: number) {
-        return this.prisma.barang.delete({ where: { id } })
+        // return this.prisma.barang.delete({ where: { id } })
+        return this.prisma.barang.update({
+            where: { id },
+            data: { inactive: true }
+        })
     }
 }

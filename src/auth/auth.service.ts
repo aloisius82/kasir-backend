@@ -27,6 +27,7 @@ export class AuthService {
         username: string
         role: string
     } | null> {
+        // console.log('authUser', username)
         const user = await this.findOne(username)
         if (user == null)
             throw new HttpException('User not found', HttpStatus.NOT_FOUND)
@@ -39,6 +40,15 @@ export class AuthService {
 
         const payload = { sub: user.id, role: user.role }
         const access_token = await this.jwtService.signAsync(payload)
+        // console.log('user logged in:', username)
+        this.prisma.user
+            .update({
+                where: { id: user.id },
+                data: { lastLogin: new Date(), lastActive: new Date() }
+            })
+            .catch((e) => {
+                console.error(e)
+            })
         return {
             access_token,
             username,
@@ -96,5 +106,16 @@ export class AuthService {
 
     async hashedPass(password: string): Promise<string> {
         return await bcrypt.hash(password, 10)
+    }
+
+    async updateLastActive(userId: number): Promise<void> {
+        this.prisma.user
+            .updateMany({
+                where: { id: userId },
+                data: { lastActive: new Date() }
+            })
+            .catch((e) => {
+                // console.error(e)
+            })
     }
 }

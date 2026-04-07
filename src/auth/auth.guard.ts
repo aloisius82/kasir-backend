@@ -16,15 +16,17 @@ export class AuthGuard implements CanActivate {
         const request = context.switchToHttp().getRequest()
         const token = this.extractTokenFromHeader(request)
         if (!token) {
-            // console.log('no token')
             throw new UnauthorizedException()
         }
         try {
             const payload = await this.auth.verifyToken(token)
             request['user'] = payload
-        } catch {
+            this.auth.updateLastActive(payload.sub)
+        } catch (error) {
+            console.log('Error verifying token:', error)
             throw new UnauthorizedException()
         }
+
         return true
     }
 

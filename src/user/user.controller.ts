@@ -36,7 +36,8 @@ export class UserController {
     }
 
     @Post('create')
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.admin)
     @ApiBearerAuth()
     createUser(@Body() data: UserCreateParm, @Request() req) {
         if (req.user.role != 'admin')

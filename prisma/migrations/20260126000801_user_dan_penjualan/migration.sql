@@ -1,0 +1,13 @@
+-- AlterTable
+ALTER TABLE `DetailPenjualan` ADD COLUMN `disconAmount` DECIMAL(65, 30) NOT NULL DEFAULT 0,
+    ADD COLUMN `disconPrecent` DECIMAL(65, 30) NOT NULL DEFAULT 0,
+    ADD COLUMN `subtotalBeforeDiscon` DECIMAL(65, 30) NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE `Penjualan` ADD COLUMN `disconAmount` DECIMAL(65, 30) NOT NULL DEFAULT 0,
+    ADD COLUMN `disconPrecent` DECIMAL(65, 30) NOT NULL DEFAULT 0,
+    ADD COLUMN `totalBeforeDiscon` DECIMAL(65, 30) NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE `User` ADD COLUMN `lastActive` DATETIME(3) NULL,
+    ADD COLUMN `lastLogin` DATETIME(3) NULL;
